@@ -1,20 +1,15 @@
 """
-Demo: replicate neighbor images in Y to mimic periodic interactions.
+Replicate neighbor images in Y (same logic as original notebook/script).
 
-Why this exists:
-- LAMMPS is periodic (PBC). Interactions can cross the box boundary.
-- For post-processing (pairwise distances / interactions), we replicate the base system
-  by shifting it by +/- N * Ly in Y, so interactions are not "missed".
-
-This script:
-1) Builds a semiperiodic sheet (central + edges) in 2D
-2) Builds a two-sheet 3D configuration (tilt angle + vertical separation)
-3) Replicates the full two-sheet system in Y (image copies)
-4) Filters a "primary" Y-window to avoid double counting
-5) Visualizes (optional) so you can sanity-check
+This script reproduces the same steps you used:
+1) Build 2D sheet (central + edge)
+2) Build 3D two-sheet system (tilt + z separation)
+3) Replicate in Y using multiples of Ly: [-3Ly, ..., +3Ly]
+4) Filter a primary Y-window (y_min_1, y_max_1)
+5) Plot the same sanity figures
 
 Run:
-python -m scripts.replicate_neighbors_demo
+python -m scripts.replicate_neighbors_same_as_original_demo
 """
 
 import numpy as np
@@ -26,13 +21,7 @@ from src.geometry.two_sheet_system import build_two_sheet_system
 
 
 def replicate_in_y(points: np.ndarray, y_offsets: list[float]) -> np.ndarray:
-    """
-    Stack image copies of `points` by shifting in y.
-    points: (N, 3)
-    """
-    if points.ndim != 2 or points.shape[1] != 3:
-        raise ValueError("points must be shape (N, 3)")
-
+    """Replicate points by shifting in y for each value in y_offsets."""
     copies = []
     for y in y_offsets:
         displacement = np.array([0.0, float(y), 0.0])
@@ -40,38 +29,26 @@ def replicate_in_y(points: np.ndarray, y_offsets: list[float]) -> np.ndarray:
     return np.vstack(copies)
 
 
-def filter_primary_y(points: np.ndarray, y_min: float, y_max: float) -> np.ndarray:
-    """
-    Keep only points with y in (y_min, y_max).
-    """
-    mask = (points[:, 1] > y_min) & (points[:, 1] < y_max)
-    return points[mask]
-
-
 def main():
     # -----------------------------
-    # Parameters (edit these)
+    # Parameters (same as your code)
     # -----------------------------
     theta_deg = 61.0
     z_dist = 5.44
 
-    # sheet geometry
     radius = 5.19
     w_max = 51.50
     h_max = 50.0
     edge_offset = 2.595
 
-    # Replication in y (Ly should match your "box length" in y for the CG system)
-    # If you know Ly exactly, set it here.
+    # same as your code
     Ly = 53.9346
-    n_images = 3
-    y_offsets = [k * Ly for k in range(-n_images, n_images + 1)]
+    y_offsets = [-3 * Ly, -2 * Ly, -1 * Ly, 0.0, 1 * Ly, 2 * Ly, 3 * Ly]
 
-    # Primary window in y (chosen to avoid double counting in your earlier workflow)
     y_min_1, y_max_1 = -1.0, 36.06
 
     # -----------------------------
-    # Build 2D sheet
+    # Build 2D sheet (same result)
     # -----------------------------
     central_xy, edge_xy = build_semiperiodic_sheet(
         radius=radius, w_max=w_max, h_max=h_max, edge_offset=edge_offset
@@ -80,77 +57,91 @@ def main():
     # -----------------------------
     # Build 3D two-sheet system
     # -----------------------------
-    flat_central, flat_edge, flat2_central, flat2_edge = build_two_sheet_system(
+    Flat_central, Flat_edge, Flat2_central, Flat2_edge = build_two_sheet_system(
         central_xy=central_xy,
         edge_xy=edge_xy,
         theta_deg=theta_deg,
         z_dist=z_dist,
     )
 
-    # Combine both sheets for replication
-    p1_cen = np.vstack((flat_central, flat2_central))
-    p1_ed = np.vstack((flat_edge, flat2_edge))
+    # Same as your code: stack two sheets
+    p1_cen = np.vstack((Flat_central, Flat2_central))
+    p1_ed = np.vstack((Flat_edge, Flat2_edge))
 
     # -----------------------------
-    # Replicate neighbor images in Y
+    # Replicate in Y (same as yours)
     # -----------------------------
-    mirrored_cen = replicate_in_y(p1_cen, y_offsets)
-    mirrored_ed = replicate_in_y(p1_ed, y_offsets)
+    FlatPlateMirr_cen = replicate_in_y(p1_cen, y_offsets)
+    FlatPlateMirr_ed = replicate_in_y(p1_ed, y_offsets)
 
     # -----------------------------
-    # Filter "primary" region
+    # Plot: base (2D scatter like yours)
     # -----------------------------
-    p1_cen_filtered = filter_primary_y(p1_cen, y_min=y_min_1, y_max=y_max_1)
-    p1_ed_filtered = filter_primary_y(p1_ed, y_min=y_min_1, y_max=y_max_1)
-
-    # -----------------------------
-    # Quick 2D sanity plot (XY)
-    # -----------------------------
-    fig, ax = plt.subplots(figsize=(12, 7))
-    ax.scatter(p1_cen_filtered[:, 0], p1_cen_filtered[:, 1], s=20, alpha=0.9, label="Central (primary)")
-    ax.scatter(p1_ed_filtered[:, 0], p1_ed_filtered[:, 1], s=20, alpha=0.9, label="Edge (primary)")
-
-    ax.xaxis.set_major_locator(MultipleLocator(edge_offset))
-    ax.yaxis.set_major_locator(MultipleLocator(np.sqrt(3) * radius / 2))
-    ax.grid(which="major", linestyle="--", alpha=0.5)
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    ax.set_title("Primary Y-window (filtered) — used to avoid double counting")
-    ax.legend()
-    plt.tight_layout()
+    plt.scatter(p1_cen[:, 0], p1_cen[:, 1])
+    plt.scatter(p1_ed[:, 0], p1_ed[:, 1])
+    plt.title("Base two-sheet system (XY)")
     plt.show()
 
     # -----------------------------
-    # 3D sanity plot (optional, can be slow if large)
+    # Plot: mirrored copies (3D like yours)
     # -----------------------------
-    fig = plt.figure(figsize=(10, 7))
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
+    ax.scatter(FlatPlateMirr_cen[:, 0], FlatPlateMirr_cen[:, 1], FlatPlateMirr_cen[:, 2], s=10, alpha=0.5)
+    ax.scatter(FlatPlateMirr_ed[:, 0], FlatPlateMirr_ed[:, 1], FlatPlateMirr_ed[:, 2], s=10, alpha=0.5)
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+    ax.set_title("Mirrored Platelets in Y (3D)")
+    plt.show()
+
+    # -----------------------------
+    # Filter primary region (same)
+    # -----------------------------
+    mask_cen = (p1_cen[:, 1] > y_min_1) & (p1_cen[:, 1] < y_max_1)
+    p1_cen_filtered = p1_cen[mask_cen]
+
+    mask_ed = (p1_ed[:, 1] > y_min_1) & (p1_ed[:, 1] < y_max_1)
+    p1_ed_filtered = p1_ed[mask_ed]
+
+    # -----------------------------
+    # Plot: filtered region (same style)
+    # -----------------------------
+    fig, ax = plt.subplots(figsize=(14, 8))
+    ax.scatter(p1_cen_filtered[:, 0], p1_cen_filtered[:, 1], s=30, alpha=0.9, label="Filtered center")
+    ax.scatter(p1_ed_filtered[:, 0], p1_ed_filtered[:, 1], s=30, alpha=0.9, label="Filtered edge")
+
+    ax.xaxis.set_major_locator(MultipleLocator(edge_offset))
+    ax.yaxis.set_major_locator(MultipleLocator(np.sqrt(3) * radius / 2))
+    ax.grid(which="major", color="#CCCCCC", linestyle="--")
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_title("Filtered particles in base system (primary Y-window)")
+    ax.legend()
+    plt.show()
+
+    # -----------------------------
+    # Plot: mirrored + filtered highlighted (same idea)
+    # -----------------------------
+    fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
 
-    # Show a subset if you want faster plotting:
-    # idx = np.random.choice(len(mirrored_cen), size=min(5000, len(mirrored_cen)), replace=False)
-    # ax.scatter(mirrored_cen[idx,0], mirrored_cen[idx,1], mirrored_cen[idx,2], s=5, alpha=0.3, label="Central images")
+    ax.scatter(FlatPlateMirr_cen[:, 0], FlatPlateMirr_cen[:, 1], FlatPlateMirr_cen[:, 2] + 10, s=10, alpha=0.5)
+    ax.scatter(FlatPlateMirr_ed[:, 0], FlatPlateMirr_ed[:, 1], FlatPlateMirr_ed[:, 2] + 10, s=10, alpha=0.5)
 
-    ax.scatter(mirrored_cen[:, 0], mirrored_cen[:, 1], mirrored_cen[:, 2], s=6, alpha=0.25, label="Central images")
-    ax.scatter(mirrored_ed[:, 0], mirrored_ed[:, 1], mirrored_ed[:, 2], s=6, alpha=0.25, label="Edge images")
-
-    ax.scatter(p1_cen_filtered[:, 0], p1_cen_filtered[:, 1], p1_cen_filtered[:, 2], s=10, alpha=0.9, label="Central primary")
-    ax.scatter(p1_ed_filtered[:, 0], p1_ed_filtered[:, 1], p1_ed_filtered[:, 2], s=10, alpha=0.9, label="Edge primary")
+    ax.scatter(p1_cen_filtered[:, 0], p1_cen_filtered[:, 1], p1_cen_filtered[:, 2], s=10, alpha=0.7)
+    ax.scatter(p1_ed_filtered[:, 0], p1_ed_filtered[:, 1], p1_ed_filtered[:, 2], s=10, alpha=0.7)
 
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
-    ax.set_title("Neighbor images in Y + primary region")
-    ax.legend(loc="upper right")
-    plt.tight_layout()
+    ax.set_title("Mirrored neighbors + primary region")
     plt.show()
 
-    # -----------------------------
-    # Print counts
-    # -----------------------------
     print("Base central (two sheets):", len(p1_cen))
     print("Base edge (two sheets):", len(p1_ed))
-    print("Mirrored central total:", len(mirrored_cen))
-    print("Mirrored edge total:", len(mirrored_ed))
+    print("Mirrored central total:", len(FlatPlateMirr_cen))
+    print("Mirrored edge total:", len(FlatPlateMirr_ed))
     print("Primary central:", len(p1_cen_filtered))
     print("Primary edge:", len(p1_ed_filtered))
 
