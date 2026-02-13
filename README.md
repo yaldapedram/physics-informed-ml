@@ -24,3 +24,9 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m scripts.coarse_graining_geometry_demo
+
+## Demo: neighbor replication (PBC-style)
+Replicates a two-sheet configuration in ±Y image copies (to mimic periodic interactions), then filters a primary Y-window to avoid double counting.
+
+Run:
+python -m scripts.replicate_neighbors_demo
