@@ -26,3 +26,8 @@ data/
 *.npy
 *.npz
 *.out
+
+# Allow small sample datasets for demos
+!data/
+!data/sample/
+!data/sample/*.out
