@@ -53,7 +53,7 @@ for i in range(i_min, i_max + 1):
     if f.ndim == 1:
         f = f[None, :]  # single-row safeguard
 
-    # time = f[:, COL_TIME] / 1000.0  # optional conversion if you want ps
+    time = f[:, COL_TIME] / 1000.0  # Time conversion
 
     forcezDown = f[:, COL_FORCEZ_DOWN]
     forcezUp = f[:, COL_FORCEZ_UP]
@@ -101,3 +101,4 @@ plt.xlabel("d-spacing")
 plt.ylabel("PMF (relative)")
 plt.tight_layout()
 plt.show()
+
