@@ -90,7 +90,7 @@ pmf = pmf - np.min(pmf)   # shift minimum to 0
 
 # save
 os.makedirs("data/sample", exist_ok=True)
-out_path = os.path.join("data/sample", "pmf_semiperiodic_na_example.out")
+out_path = os.path.join("data/sample", "pmf_semiperiodic_sheet_dspacing_energy.out")
 np.savetxt(out_path, np.column_stack((x_int, pmf)))
 print("Saved:", out_path)
 
@@ -101,4 +101,5 @@ plt.xlabel("d-spacing")
 plt.ylabel("PMF (relative)")
 plt.tight_layout()
 plt.show()
+
 
