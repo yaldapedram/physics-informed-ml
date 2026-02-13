@@ -6,9 +6,7 @@ from src.geometry.semiperiodic_sheet import build_semiperiodic_sheet
 
 
 def main():
-    # -----------------------------
-    # Parameters (edit these)
-    # -----------------------------
+
     theta_deg = 61.0
     z_dist = 5.44
 
