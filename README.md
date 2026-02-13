@@ -30,3 +30,15 @@ Replicates a two-sheet configuration in ±Y image copies (to mimic periodic inte
 
 Run:
 python -m scripts.replicate_neighbors_demo
+
+### Demo: CC GPR training (local data)
+This demo expects:
+- a pairwise dictionary `.npy` (d_spacing -> distances)
+- a 2-column `.out` file (d_spacing, energy)
+
+Example (local paths):
+python -m scripts.train_cc_gpr_demo \
+  --pairwise /path/to/PairDis_cc.npy \
+  --pmf /path/to/distance_cc.out \
+  --epochs 200 --optimizer lbfgs --plot
+
