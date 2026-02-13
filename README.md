@@ -1,44 +1,27 @@
 # Physics-informed ML — selected code examples
 
-This repository contains small, self-contained examples extracted from my PhD research codebase.
+This repository contains small, self-contained examples extracted from my PhD research codebase (multiscale modeling / physics-informed ML for clay platelet interactions). The goal is to show **clean, reproducible pieces** of the workflow—geometry generation, periodic “image” handling, PMF-style data handling, pairwise distance preprocessing, and lightweight training demos—without publishing the full research repo or any confidential data.
 
-## Demo: Semiperiodic sheet geometry
-Generates a 2D semiperiodic sheet with edge particles, then builds a two-sheet 3D configuration (tilt angle + vertical separation) and visualizes both.
+## What this repo demonstrates (industry + research)
+**Research relevance**
+- A reproducible pipeline from **simulation outputs → structured datasets → simple training loops**
+- Physics-informed choices (e.g., **Morse baseline + kernel/GPR correction**) to improve data efficiency and interpretability
+- Practical validation steps for periodic systems (replication / neighbor images) to avoid missing cross-boundary interactions
 
-## Sample PMF-style dataset (d-spacing vs energy)
-I include a small example dataset extracted from PMF post-processing:
+**Industry relevance**
+- Modular Python package structure (`src/`) with scripts that run end-to-end (`scripts/`)
+- Data I/O utilities and sanity checks that make experiments debuggable and repeatable
+- Training demos in PyTorch that illustrate model design, optimization loops, and parameter tracking
 
-- `data/sample/distance_Semi_extrapolation.out`
+## Repository layout
+- `src/geometry/` — geometry builders for a semiperiodic sheet and a two-sheet configuration
+- `src/pairwise/` — utilities for loading/saving pairwise distance datasets
+- `src/pmf/` — utilities for loading “PMF-style” curves (distance vs free energy)
+- `src/training/` — small training utilities / helpers used by demo scripts
+- `scripts/` — runnable demos (plotting, geometry validation, training)
 
-**Format (2 columns):**
-1. `d_spacing` (same length unit as used in the simulations / analysis)
-2. `free_energy` (relative; shifted by an arbitrary constant)
+## Demo 1 — Semiperiodic sheet + two-sheet configuration
+Builds a semiperiodic sheet (central + edge sites), then constructs a two-sheet 3D configuration (tilt + vertical separation).
 
-### Quick plot
 ```bash
-python -m scripts.plot_pmf_demo data/sample/distance_Semi_extrapolation.out
-
-
-### Run locally
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
 python -m scripts.coarse_graining_geometry_demo
-
-## Demo: neighbor replication (PBC-style)
-Replicates a two-sheet configuration in ±Y image copies (to mimic periodic interactions), then filters a primary Y-window to avoid double counting.
-
-Run:
-python -m scripts.replicate_neighbors_demo
-
-### Demo: CC GPR training (local data)
-This demo expects:
-- a pairwise dictionary `.npy` (d_spacing -> distances)
-- a 2-column `.out` file (d_spacing, energy)
-
-Example (local paths):
-python -m scripts.train_cc_gpr_demo \
-  --pairwise /path/to/PairDis_cc.npy \
-  --pmf /path/to/distance_cc.out \
-  --epochs 200 --optimizer lbfgs --plot
-
