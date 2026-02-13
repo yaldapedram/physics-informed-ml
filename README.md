@@ -2,7 +2,7 @@
 
 This repository contains small, self-contained examples extracted from my PhD research codebase (multiscale modeling / physics-informed ML for clay platelet interactions). The goal is to show **clean, reproducible pieces** of the workflow—geometry generation, periodic “image” handling, PMF-style data handling, pairwise distance preprocessing, and lightweight training demos—without publishing the full research repo or any confidential data.
 
-## What this repo demonstrates (industry + research)
+## What this repo demonstrates 
 **Research relevance**
 - A reproducible pipeline from **simulation outputs → structured datasets → simple training loops**
 - Physics-informed choices (e.g., **Morse baseline + kernel/GPR correction**) to improve data efficiency and interpretability
