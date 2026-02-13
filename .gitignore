@@ -31,3 +31,4 @@ data/
 !data/
 !data/sample/
 !data/sample/*.out
+!data/sample/**
