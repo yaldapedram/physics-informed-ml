@@ -6,6 +6,23 @@
 __pycache__/
 *.pyc
 
-# Editors
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors / IDEs
 *.swp
 .vscode/
+
+# Build / tooling
+.pytest_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+
+# Project outputs / data (keep code only)
+outputs/
+data/
+*.npy
+*.npz
+*.out
