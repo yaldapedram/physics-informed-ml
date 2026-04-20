@@ -1,6 +1,9 @@
 # Physics-informed ML — selected code examples
 
-This repository contains small, self-contained examples extracted from my PhD research codebase (multiscale modeling / physics-informed ML for clay platelet interactions). The goal is to show **clean, reproducible pieces** of the workflow—geometry generation, periodic “image” handling, PMF-style data handling, pairwise distance preprocessing, and lightweight training demos—without publishing the full research repo or any confidential data.
+This repository contains small, self-contained examples extracted from my PhD research codebase on multiscale modeling and physics-informed machine learning for clay platelet interactions. 
+
+The purpose of this repository is to showcase clean, reproducible parts of the workflow, including geometry generation, periodic image handling, PMF-style data processing, pairwise-distance preprocessing, and lightweight training demos.
+
 
 ## What this repo demonstrates 
 **Research relevance**
