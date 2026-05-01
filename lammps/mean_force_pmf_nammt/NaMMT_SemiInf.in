@@ -1,0 +1,212 @@
+# -------------------------------------------------------------------------
+# Na-MMT fixed-separation simulation for PMF analysis
+#
+# Purpose:
+#   This LAMMPS input script runs a hydrated Na-montmorillonite (Na-MMT)
+#   system at a prescribed platelet separation. The upper MMT platelet is
+#   displaced in the z direction, overlapping water molecules are removed,
+#   and the system is equilibrated with NPT followed by NVT production.
+#
+#   The output includes thermodynamic quantities, pressure components,
+#   center-of-mass coordinates of the upper and lower platelets, and forces
+#   on selected pinned atoms. These outputs can be post-processed across
+#   multiple fixed-separation simulations to estimate a PMF/free-energy
+#   profile.
+#
+# Example run:
+#   mpirun -np 32 ${lmp_exec} -in Na.in
+#
+# Notes:
+#   - The input structure file is system-specific.
+#   - The atom IDs, molecule IDs, and element list should be updated if the
+#     structure file changes.
+#   - This script does not directly calculate the PMF. The PMF is obtained
+#     by post-processing outputs from a series of simulations at different
+#     z displacements.
+# -------------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------------
+# Initialization
+# -------------------------------------------------------------------------
+
+units           real
+dimension       3
+boundary        p p p
+
+atom_style      full
+pair_style      lj/cut/coul/long 9.5
+pair_modify     shift yes mix geometric
+
+kspace_style    ewald 1.0e-6
+neighbor        4 bin
+
+bond_style      harmonic
+angle_style     harmonic
+
+
+# -------------------------------------------------------------------------
+# Read initial structure
+# -------------------------------------------------------------------------
+
+read_data       WaterSemiInfNaMMT.data
+
+
+# -------------------------------------------------------------------------
+# Force-field parameters
+# -------------------------------------------------------------------------
+# Bond coefficients.
+# These correspond to H-O bonds in water/clay hydroxyl groups.
+
+bond_coeff 1 554.1349 1.0    # H-O
+bond_coeff 2 554.1349 1.0    # H-O
+bond_coeff 3 554.1349 1.0    # H-O
+bond_coeff 4 554.1349 1.0    # H-O
+bond_coeff 5 554.1349 1.0    # H-O
+bond_coeff 6 554.1349 1.0    # H-O
+
+# Angle coefficients: force constant and equilibrium angle.
+
+angle_coeff 1 45.753 109.47  # H-O-H
+angle_coeff 2 15 100         # Si-O-H
+angle_coeff 3 15 110         # Al-O-H
+
+
+# -------------------------------------------------------------------------
+# Group definitions for displacement
+# -------------------------------------------------------------------------
+# The group "replica" contains the upper MMT platelet and associated species
+# that are displaced to create different platelet separations.
+
+group           replica molecule 10168:10169
+
+
+# -------------------------------------------------------------------------
+# Apply z-direction displacement
+# -------------------------------------------------------------------------
+# DISPLACEMENT_INDEX is replaced by the loop script before each simulation.
+# For example, if DISPLACEMENT_INDEX = 50 and increment = 0.2, then:
+#   displaced = 50 * 0.2 = 10 Angstrom
+#
+# This displacement is applied in the z direction and controls the initial
+# platelet separation used for PMF-style simulations.
+
+variable        increment equal 0.2
+variable        DISPLACEMENT_INDEX equal DisplacementIndex
+variable        displaced equal ${DISPLACEMENT_INDEX}*${increment}
+
+displace_atoms  replica move 0 0 ${displaced}
+
+# Alternative fixed-displacement example:
+# displace_atoms replica move 0 0 18
+
+# -------------------------------------------------------------------------
+# Remove overlapping water molecules
+# -------------------------------------------------------------------------
+# Water molecules that overlap with the MMT platelets after displacement are
+# removed. The "mol yes" option removes the full molecule when one atom
+# overlaps.
+
+group           water id < 30499
+group           mmt id > 30498
+
+delete_atoms    overlap 2 water mmt mol yes
+
+write_data      platelets.data
+
+
+# -------------------------------------------------------------------------
+# Center-of-mass tracking
+# -------------------------------------------------------------------------
+# The upper and lower MMT platelets are grouped by molecule ID.
+# Their center-of-mass coordinates are printed in thermo output.
+
+group           up molecule 10168
+
+compute         com_up up com
+variable        UpX equal c_com_up[1]
+variable        UpY equal c_com_up[2]
+variable        UpZ equal c_com_up[3]
+
+group           lower molecule 10167
+
+compute         com_lower lower com
+variable        LowX equal c_com_lower[1]
+variable        LowY equal c_com_lower[2]
+variable        LowZ equal c_com_lower[3]
+
+
+# -------------------------------------------------------------------------
+# Force-constrained atoms for PMF analysis
+# -------------------------------------------------------------------------
+# Selected atoms in each MMT platelet are constrained with fix setforce to
+# maintain the imposed platelet separation after the z-displacement. The
+# corresponding force terms are written to the thermo output and can be used,
+# together with simulations at other separations, to estimate the mean force
+# profile for PMF/free-energy reconstruction.
+#
+# These atom IDs are specific to WaterSemiInfNaMMT.data and should be updated
+# if a different structure is used.
+
+group           frozenup id 32295 32465 32565 32835 32895 33005 33165 33245 33485 33555 33655 33725 33885 33335
+velocity        frozenup set 0 0 0
+fix             1 frozenup setforce 0 0 0
+
+group           frozendown id 30539 30809 30879 31079 31139 31239 31309 31399 31479 31629 31719 31799 31959 32119
+velocity        frozendown set 0 0 0
+fix             2 frozendown setforce 0 0 0
+
+
+# -------------------------------------------------------------------------
+# NPT equilibration
+# -------------------------------------------------------------------------
+# The system is pre-equilibrated at 300 K with pressure control in the z direction.
+
+
+timestep        1
+thermo          1000
+
+fix             3 all npt temp 300.0 300.0 100 z 1 1 100
+
+thermo_style    custom step temp etotal density vol lz press pxx pyy pzz pe &
+                v_UpX v_UpY v_UpZ v_LowX v_LowY v_LowZ &
+                f_1[1] f_1[2] f_1[3] f_2[1] f_2[2] f_2[3]
+
+thermo_modify   lost/bond ignore
+
+dump            1 all xyz 5000 NaMMT_npt_iso1.xyz
+dump_modify     1 element H O Al Al H Mg Mg O O O O O O O O O O Si Na
+
+# restart 10000 NaMMT_NPT_iso_1.restart
+
+run             200000
+
+unfix           3
+undump          1
+
+
+# -------------------------------------------------------------------------
+# NVT production
+# -------------------------------------------------------------------------
+# After NPT pre-equilibration, the system is propagated at constant volume and
+# temperature. The production outputs can be used for PMF-style post-processing.
+
+reset_timestep  0
+timestep        1
+thermo          100
+
+fix             4 all nvt temp 300.0 300.0 100
+
+dump            3 all atom 2000 NaMMT_NVT.atom
+
+restart         20000 NaMMT_NVT.restart
+
+run             2000000
+
+unfix           4
+undump          3
+
+
+# -------------------------------------------------------------------------
+# End of simulation
+# -------------------------------------------------------------------------

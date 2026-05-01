@@ -1,0 +1,9 @@
+for i in `seq -4 10`
+	do
+		mkdir Na_$i
+		cd Na_$i
+		cp ../{NaMMT_SemiInf.in,sbatch.sh,WaterSemiInfNaMMT.data} .
+		sed	-e 's/DisplacementIndex/'$i'/g' NaMMT_SemiInf.in > Na.in
+                 sbatch sbatch.sh
+		cd ..
+done
