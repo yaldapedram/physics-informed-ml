@@ -32,7 +32,7 @@ Builds a semiperiodic sheet (central + edge sites), then constructs a two-sheet 
 
 ```bash
 python -m scripts.coarse_graining_geometry_demo
-
+```
 ## Demo 2 — LAMMPS-to-PMF workflow
 
 The folder `lammps/mean_force_pmf_nammt/` contains a LAMMPS workflow template for fixed-separation Na-MMT simulations used in potential of mean force (PMF) analysis.
