@@ -1,8 +1,21 @@
-# Physics-informed ML — selected code examples
+# Physics-informed ML for Na-MMT coarse-grained interactions
 
-This repository contains small, self-contained examples extracted from my PhD research codebase on multiscale modeling and physics-informed machine learning for clay platelet interactions. 
+This repository contains tabulated Morse+GPR pair potentials, example PMF
+processing scripts, and lightweight training/analysis scripts related to
+coarse-grained modelling of hydrated sodium montmorillonite (Na-MMT).
 
-The purpose of this repository is to showcase clean, reproducible parts of the workflow, including geometry generation, periodic image handling, PMF-style data processing, pairwise-distance preprocessing, and lightweight training demos.
+The repository supports the development and use of a physics-informed
+coarse-grained interaction model in which a Morse baseline potential is combined
+with a Gaussian process regression (GPR) correction trained on all-atom
+potentials of mean force.
+
+## Related manuscript
+
+This repository is associated with the manuscript:
+
+Y. Pedram et al., "A Gaussian process coarse-grained potential for Na-montmorillonite", submitted.
+
+The full citation and DOI will be added after publication.
 
 
 ## What this repo demonstrates 
