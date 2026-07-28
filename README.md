@@ -6,12 +6,12 @@ The purpose of this repository is to showcase clean, reproducible parts of the w
 
 
 ## What this repo demonstrates 
-**Research relevance**
+
 - A reproducible pipeline from **simulation outputs → structured datasets → simple training loops**
 - Physics-informed choices (e.g., **Morse baseline + kernel/GPR correction**) to improve data efficiency and interpretability
 - Practical validation steps for periodic systems (replication / neighbor images) to avoid missing cross-boundary interactions
 
-**Industry relevance**
+
 - Modular Python package structure (`src/`) with scripts that run end-to-end (`scripts/`)
 - Data I/O utilities and sanity checks that make experiments debuggable and repeatable
 - Training demos in PyTorch that illustrate model design, optimization loops, and parameter tracking
